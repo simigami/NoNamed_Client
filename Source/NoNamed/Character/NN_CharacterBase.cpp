@@ -8,6 +8,8 @@
 #include "EnhancedInputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "InputActionValue.h"
+#include "Nonamed/Core/NN_ObjectBase.h"
+#include "Nonamed/Data/NN_CharacterDataAsset.h"
 
 ANN_CharacterBase::ANN_CharacterBase()
 {
@@ -45,6 +47,66 @@ ANN_CharacterBase::ANN_CharacterBase()
 		MeshComponent->SetOwnerNoSee(true);
 		MeshComponent->bCastDynamicShadow = true;
 		MeshComponent->bCastHiddenShadow = true;
+	}
+}
+
+void ANN_CharacterBase::BindSourceObject(UNN_ObjectBase* InSourceObject)
+{
+	SourceObject = InSourceObject;
+}
+
+void ANN_CharacterBase::ApplySpawnContext(const FNN_ObjectSpawnContext& Context)
+{
+	ApplyIdentityContext(Context.Identity);
+	ApplyMeshContext(Context.Mesh);
+}
+
+void ANN_CharacterBase::ApplyIdentityContext(const FNN_ObjectIdentityContext& Identity)
+{
+	ObjectId = Identity.ObjectId;
+	DisplayName = Identity.DisplayName;
+}
+
+void ANN_CharacterBase::ApplyMeshContext(const FNN_ObjectMeshContext& OutMesh) const
+{
+	if (USkeletalMeshComponent* CharacterMesh = GetMesh())
+	{
+		if (OutMesh.SkeletalMesh)
+		{
+			CharacterMesh->SetSkeletalMesh(OutMesh.SkeletalMesh);
+			CharacterMesh->SetVisibility(false);
+		}
+	}
+}
+
+void ANN_CharacterBase::ApplyCharacterMeshTransform(const FNN_CharacterMeshTransformContext& MeshTransformContext)
+{
+	if (USkeletalMeshComponent* CharacterMesh = GetMesh())
+	{
+		CharacterMesh->SetRelativeLocation(MeshTransformContext.RelativeLocation);
+		CharacterMesh->SetRelativeRotation(MeshTransformContext.RelativeRotation);
+
+		if (CharacterMesh->GetSkeletalMeshAsset())
+		{
+			CharacterMesh->SetVisibility(true);
+		}
+	}
+}
+
+void ANN_CharacterBase::ApplyCharacterAnimation(const FNN_CharacterAnimationContext& AnimContext)
+{
+	AnimBlueprintClass = AnimContext.AnimBlueprintClass;
+	DefaultHitMontage = AnimContext.DefaultHitMontage;
+	DefaultDeathMontage = AnimContext.DefaultDeathMontage;
+
+	// Bind AnimBlueprint class to the character skeletal mesh
+	if (USkeletalMeshComponent* CharacterMesh = GetMesh())
+	{
+		if (AnimBlueprintClass)
+		{
+			CharacterMesh->SetAnimInstanceClass(AnimBlueprintClass);
+			UE_LOG(LogTemp, Log, TEXT("ANN_CharacterBase::ApplyCharacterAnimation - Applied AnimInstance Class successfully."));
+		}
 	}
 }
 

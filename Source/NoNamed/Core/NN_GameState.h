@@ -6,8 +6,18 @@
 #include "GameFramework/GameStateBase.h"
 #include "NN_GameState.generated.h"
 
+class UNN_CharacterDataAsset;
+
 UCLASS()
 class NONAMED_API ANN_GameState : public AGameStateBase
 {
 	GENERATED_BODY()
+
+public:
+	UFUNCTION()
+	UNN_CharacterDataAsset* GetCharacterDataAsset() const;
+
+protected:
+	UPROPERTY(EditDefaultsOnly, Category = "Character")
+	TObjectPtr<UNN_CharacterDataAsset> CharacterDataAsset;
 };
