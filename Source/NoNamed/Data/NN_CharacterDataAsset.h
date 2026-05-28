@@ -9,9 +9,9 @@
 class UAnimInstance;
 class UAnimMontage;
 
-/** Relative transform for the character skeletal mesh */
+/** Relative transform for a spawned object's mesh component */
 USTRUCT(BlueprintType)
-struct FNN_CharacterMeshTransformContext
+struct FNN_ObjectMeshTransformContext
 {
 	GENERATED_BODY()
 
@@ -41,6 +41,19 @@ struct FNN_CharacterAnimationContext
 	TObjectPtr<UAnimMontage> DefaultDeathMontage = nullptr;
 };
 
+/** DataAsset-driven context applied to a spawned character */
+USTRUCT(BlueprintType)
+struct FNN_CharacterObjectSpawnContext :  public FNN_ObjectSpawnContext
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Animation")
+	FNN_CharacterAnimationContext Animation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Spawn|Mesh")
+	FNN_ObjectMeshTransformContext MeshTransform;
+};
+
 /**
  * Base DataAsset for character-specific data.
  */
@@ -56,7 +69,7 @@ public:
 
 	/** Skeletal mesh relative transform */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Visual")
-	FNN_CharacterMeshTransformContext MeshTransformContext;
+	FNN_ObjectMeshTransformContext MeshTransformContext;
 
 	virtual UNN_ObjectBase* CreateInstance(UObject* Outer) override;
 };

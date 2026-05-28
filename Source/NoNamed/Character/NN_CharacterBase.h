@@ -10,6 +10,7 @@
 #include "NN_CharacterBase.generated.h"
 
 struct FInputActionValue;
+struct FNN_CharacterObjectSpawnContext;
 class UCameraComponent;
 class UNN_ObjectBase;
 class UAnimInstance;
@@ -53,14 +54,16 @@ public:
 
 	//~ Begin INN_ObjectActorInterface Interface
 	virtual void ApplySpawnContext(const FNN_ObjectSpawnContext& Context) override;
+	virtual void ApplySpawnContext(const FNN_CharacterObjectSpawnContext& Context);
 	virtual void BindSourceObject(UNN_ObjectBase* InSourceObject) override;
 	//~ End INN_ObjectActorInterface Interface
 
 	/** Applies character animation data */
 	virtual void ApplyCharacterAnimation(const FNN_CharacterAnimationContext& AnimContext);
+	virtual void ApplyAnimationContext(const FNN_CharacterAnimationContext& AnimContext);
 
 	/** Applies skeletal mesh relative transform; shows mesh after transform is set */
-	virtual void ApplyCharacterMeshTransform(const FNN_CharacterMeshTransformContext& MeshTransformContext);
+	virtual void ApplyCharacterMeshTransform(const FNN_ObjectMeshTransformContext& MeshTransformContext);
 
 protected:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;

@@ -326,7 +326,7 @@ Inside `UNN_CharacterObjectBase`:
 ## Character DataAsset
 
 - `FNN_CharacterAnimationContext` — ABP class, hit/death montages
-- `FNN_CharacterMeshTransformContext` — skeletal mesh relative location/rotation
+- `FNN_ObjectMeshTransformContext` — skeletal mesh relative location/rotation
 - Applied via `ApplyCharacterAnimation` and `ApplyCharacterMeshTransform` in `ContextSetting`
 
 ## Coding Practices

@@ -1,12 +1,10 @@
 #include "NN_DataAsset.h"
 #include "NoNamed/Core/NN_ObjectBase.h"
 
-FNN_ObjectSpawnContext UNN_DataAsset::BuildSpawnContext() const
+void UNN_DataAsset::BuildSpawnContext(FNN_ObjectSpawnContext& OutContext) const
 {
-	FNN_ObjectSpawnContext Context;
-	Context.Identity = Identity;
-	Context.Mesh = Mesh;
-	return Context;
+	OutContext.Identity = Identity;
+	OutContext.Mesh = Mesh;
 }
 
 UNN_ObjectBase* UNN_DataAsset::CreateInstance(UObject* Outer)

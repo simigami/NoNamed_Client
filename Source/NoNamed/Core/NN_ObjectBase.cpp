@@ -1,5 +1,6 @@
 #include "NN_ObjectBase.h"
 #include "Engine/World.h"
+#include "NoNamed/Data/NN_CharacterDataAsset.h"
 #include "NoNamed/Data/NN_DataAsset.h"
 #include "NoNamed/Interface/NN_ObjectActorInterface.h"
 
@@ -13,14 +14,20 @@ bool UNN_ObjectBase::ShouldSpawnIntoWorld() const
 	return DataAsset != nullptr && DataAsset->ActorClassToSpawn != nullptr;
 }
 
-FNN_ObjectSpawnContext UNN_ObjectBase::AssembleSpawnContext() const
+void UNN_ObjectBase::AssembleActorSpawnContext(FNN_ObjectSpawnContext& OutContext) const
 {
 	if (DataAsset)
 	{
-		return DataAsset->BuildSpawnContext();
+		DataAsset->BuildSpawnContext(OutContext);
 	}
+}
 
-	return FNN_ObjectSpawnContext();
+void UNN_ObjectBase::AssembleCharacterSpawnContext(FNN_CharacterObjectSpawnContext& OutContext) const
+{
+	if (DataAsset)
+	{
+		DataAsset->BuildSpawnContext(OutContext);
+	}
 }
 
 void UNN_ObjectBase::OnSpawnedActorCreated(AActor* Actor, const FNN_ObjectSpawnContext& Context)
@@ -45,7 +52,8 @@ AActor* UNN_ObjectBase::SpawnIntoWorld(UWorld* World, const FTransform& SpawnTra
 		return nullptr;
 	}
 
-	const FNN_ObjectSpawnContext Context = AssembleSpawnContext();
+	FNN_ObjectSpawnContext Context;
+	AssembleActorSpawnContext(Context);
 	TSubclassOf<AActor> ActorClass = DataAsset->ActorClassToSpawn;
 	if (!ActorClass)
 	{

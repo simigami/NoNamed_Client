@@ -15,7 +15,7 @@ ANN_CharacterBase* UNN_CharacterSpawnSubsystem::SpawnCharacterFromObject(
 	UNN_CharacterObjectBase* CharacterObject, 
 	UWorld* World, 
 	const FTransform& SpawnTransform, 
-	const FNN_CharacterSpawnContext& SpawnContext)
+	const FNN_CharacterRuntimeSpawnContext& RuntimeCtx)
 {
 	if (!CharacterObject)
 	{
@@ -30,5 +30,5 @@ ANN_CharacterBase* UNN_CharacterSpawnSubsystem::SpawnCharacterFromObject(
 	}
 
 	// Delegate the 5-step character spawn sequence to CharacterObject
-	return CharacterObject->SpawnCharacter(World, SpawnTransform, SpawnContext);
+	return CharacterObject->SpawnCharacter(World, SpawnTransform, &RuntimeCtx);
 }

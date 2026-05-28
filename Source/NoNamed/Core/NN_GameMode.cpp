@@ -51,14 +51,18 @@ APawn* ANN_GameMode::SpawnDefaultPawnAtTransform_Implementation(AController* New
 		return nullptr;
 	}
 	
-	FNN_CharacterSpawnContext SpawnContext;
+	if (!PS || !PS->CharacterObjectBase)
+	{
+		return nullptr;
+	}
 
-	SpawnContext.Controller = NewPlayer;
-	SpawnContext.PlayerState = PS;
-	SpawnContext.Owner = NewPlayer;
-	SpawnContext.bIsPlayer = true;
+	FNN_CharacterRuntimeSpawnContext RuntimeCtx;
+	RuntimeCtx.Ownership.Controller = NewPlayer;
+	RuntimeCtx.Ownership.PlayerState = PS;
+	RuntimeCtx.Ownership.Owner = NewPlayer;
+	RuntimeCtx.bIsPlayer = true;
 	
-	ANN_CharacterBase* CB = 	CharacterSpawnSubsystem->SpawnCharacterFromObject(PS->CharacterObjectBase, GetWorld(), SpawnTransform, SpawnContext);
+	ANN_CharacterBase* CB = CharacterSpawnSubsystem->SpawnCharacterFromObject(PS->CharacterObjectBase, GetWorld(), SpawnTransform, RuntimeCtx);
 	check(CB);
 	
 	return CB;

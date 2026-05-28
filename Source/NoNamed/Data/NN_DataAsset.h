@@ -71,7 +71,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Spawn")
 	TSubclassOf<AActor> ActorClassToSpawn;
 
-	FNN_ObjectSpawnContext BuildSpawnContext() const;
+	void BuildSpawnContext(FNN_ObjectSpawnContext& OutContext) const;
 
 	/** Creates a runtime UObject logic instance from this data asset */
 	UFUNCTION(BlueprintCallable, Category = "NN|Instance")

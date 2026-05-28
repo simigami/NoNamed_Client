@@ -4,6 +4,7 @@
 #include "NoNamed/Data/NN_DataAsset.h"
 #include "NN_ObjectBase.generated.h"
 
+struct FNN_CharacterObjectSpawnContext;
 class UNN_DataAsset;
 class AActor;
 
@@ -27,7 +28,8 @@ public:
 
 	virtual bool ShouldSpawnIntoWorld() const;
 
-	virtual FNN_ObjectSpawnContext AssembleSpawnContext() const;
+	virtual void AssembleActorSpawnContext(FNN_ObjectSpawnContext& OutContext) const;
+	virtual void AssembleCharacterSpawnContext(FNN_CharacterObjectSpawnContext& OutContext) const;
 
 	/** Spawns the world-representation actor via DeferredSpawn (distinct from UE SpawnActor) */
 	virtual AActor* SpawnIntoWorld(UWorld* World, const FTransform& SpawnTransform);

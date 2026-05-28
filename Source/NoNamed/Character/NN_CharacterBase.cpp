@@ -61,6 +61,13 @@ void ANN_CharacterBase::ApplySpawnContext(const FNN_ObjectSpawnContext& Context)
 	ApplyMeshContext(Context.Mesh);
 }
 
+void ANN_CharacterBase::ApplySpawnContext(const FNN_CharacterObjectSpawnContext& Context)
+{
+	ApplySpawnContext(static_cast<const FNN_ObjectSpawnContext&>(Context));
+	ApplyAnimationContext(Context.Animation);
+	ApplyCharacterMeshTransform(Context.MeshTransform);
+}
+
 void ANN_CharacterBase::ApplyIdentityContext(const FNN_ObjectIdentityContext& Identity)
 {
 	ObjectId = Identity.ObjectId;
@@ -79,7 +86,7 @@ void ANN_CharacterBase::ApplyMeshContext(const FNN_ObjectMeshContext& OutMesh) c
 	}
 }
 
-void ANN_CharacterBase::ApplyCharacterMeshTransform(const FNN_CharacterMeshTransformContext& MeshTransformContext)
+void ANN_CharacterBase::ApplyCharacterMeshTransform(const FNN_ObjectMeshTransformContext& MeshTransformContext)
 {
 	if (USkeletalMeshComponent* CharacterMesh = GetMesh())
 	{
@@ -108,6 +115,11 @@ void ANN_CharacterBase::ApplyCharacterAnimation(const FNN_CharacterAnimationCont
 			UE_LOG(LogTemp, Log, TEXT("ANN_CharacterBase::ApplyCharacterAnimation - Applied AnimInstance Class successfully."));
 		}
 	}
+}
+
+void ANN_CharacterBase::ApplyAnimationContext(const FNN_CharacterAnimationContext& AnimContext)
+{
+	ApplyCharacterAnimation(AnimContext);
 }
 
 void ANN_CharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
