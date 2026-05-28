@@ -15,6 +15,8 @@ class UCameraComponent;
 class UNN_ObjectBase;
 class UAnimInstance;
 class UAnimMontage;
+class UNN_InventoryComponent;
+class UNN_EquipmentComponent;
 
 /**
  * Base class for all characters (player, AI, etc.).
@@ -30,6 +32,12 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<UCameraComponent> FirstPersonCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NN")
+	TObjectPtr<UNN_InventoryComponent> InventoryComp;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "NN")
+	TObjectPtr<UNN_EquipmentComponent> EquipmentComp;
 
 	/** Source UObject logic instance that owns this character */
 	UPROPERTY(VisibleAnywhere, Category = "NN")
@@ -55,6 +63,7 @@ public:
 	//~ Begin INN_ObjectActorInterface Interface
 	virtual void ApplySpawnContext(const FNN_ObjectSpawnContext& Context) override;
 	virtual void ApplySpawnContext(const FNN_CharacterObjectSpawnContext& Context);
+	
 	virtual void BindSourceObject(UNN_ObjectBase* InSourceObject) override;
 	//~ End INN_ObjectActorInterface Interface
 
@@ -70,6 +79,9 @@ protected:
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+
+	void StartFire();
+	void StopFire();
 
 	void ApplyIdentityContext(const FNN_ObjectIdentityContext& Identity);
 	void ApplyMeshContext(const FNN_ObjectMeshContext& Mesh) const;

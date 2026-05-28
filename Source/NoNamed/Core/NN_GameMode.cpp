@@ -10,6 +10,10 @@
 #include "NoNamed/Subsystem/NN_CharacterSpawnSubsystem.h"
 #include "NoNamed/Subsystem/NN_ObjectSpawnSubsystem.h"
 #include "NoNamed/Data/NN_CharacterDataAsset.h"
+#include "NoNamed/Item/NN_InventoryComponent.h"
+#include "NoNamed/Character/NN_EquipmentComponent.h"
+#include "NoNamed/Weapon/NN_WeaponObjectBase.h"
+#include "NoNamed/Weapon/NN_WeaponDataAsset.h"
 #include "UObject/ConstructorHelpers.h"
 
 ANN_GameMode::ANN_GameMode()
@@ -64,6 +68,38 @@ APawn* ANN_GameMode::SpawnDefaultPawnAtTransform_Implementation(AController* New
 	
 	ANN_CharacterBase* CB = CharacterSpawnSubsystem->SpawnCharacterFromObject(PS->CharacterObjectBase, GetWorld(), SpawnTransform, RuntimeCtx);
 	check(CB);
+
+	if (ANN_GameState* GS = GetGameState<ANN_GameState>())
+	{
+		const TArray<TObjectPtr<UNN_WeaponDataAsset>>& TestWeapons = GS->GetTestWeaponDataAssets();
+		UNN_WeaponObjectBase* LastEquippedWeapon = nullptr;
+
+		for (const TObjectPtr<UNN_WeaponDataAsset>& WeaponData : TestWeapons)
+		{
+			if (WeaponData)
+			{
+				UNN_ObjectBase* NewInstance = WeaponData->CreateInstance(CB);
+				if (UNN_WeaponObjectBase* WeaponObj = Cast<UNN_WeaponObjectBase>(NewInstance))
+				{
+					if (UNN_InventoryComponent* InvComp = CB->FindComponentByClass<UNN_InventoryComponent>())
+					{
+						if (InvComp->PickupItem(WeaponObj))
+						{
+							LastEquippedWeapon = WeaponObj;
+						}
+					}
+				}
+			}
+		}
+
+		if (LastEquippedWeapon)
+		{
+			if (UNN_EquipmentComponent* EquipComp = CB->FindComponentByClass<UNN_EquipmentComponent>())
+			{
+				EquipComp->EquipHand(LastEquippedWeapon);
+			}
+		}
+	}
 	
 	return CB;
 }

@@ -40,6 +40,13 @@ ANN_PlayerController::ANN_PlayerController()
 	{
 		MoveAction = MoveActionFinder.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> FireActionFinder(
+		TEXT("/Game/NN/Input/Actions/IA_Fire.IA_Fire"));
+	if (FireActionFinder.Succeeded())
+	{
+		FireAction = FireActionFinder.Object;
+	}
 }
 
 void ANN_PlayerController::BeginPlay()
