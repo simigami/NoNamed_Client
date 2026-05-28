@@ -13,4 +13,8 @@ class NONAMED_API ANN_GameMode : public AGameModeBase
 
 public:
 	ANN_GameMode();
+	
+	virtual APawn* SpawnDefaultPawnAtTransform_Implementation(AController* NewPlayer, const FTransform& SpawnTransform) override;
+	virtual UClass* GetDefaultPawnClassForController_Implementation(AController* InController) override;
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 };

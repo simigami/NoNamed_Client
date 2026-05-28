@@ -1,0 +1,336 @@
+# Unreal Client Repository Rules (NoNamed)
+
+## Repository Goal
+
+This repository exists to build a **server-authoritative FPS Unreal client**.
+
+Primary focus:
+- networking
+- synchronization
+- prediction
+- visualization
+- clean gameplay architecture
+- debugging
+
+The client is **not** the gameplay authority. The server always owns the final gameplay state.
+
+---
+
+## Repository Philosophy
+
+### Prefer Stable and Focused Changes
+
+Prefer:
+- small isolated features
+- predictable gameplay flow
+- maintainable architecture
+- debuggable systems
+
+Avoid:
+- large mixed-purpose PRs
+- unnecessary visual polish
+- experimental engine-heavy systems
+- tightly coupled gameplay logic
+
+---
+
+## Unreal Philosophy
+
+The Unreal client is primarily:
+- input collection
+- visualization
+- temporary prediction
+- synchronization smoothing
+
+The client must **not**:
+- resolve gameplay authority
+- apply permanent gameplay state
+- trust local-only simulation
+
+---
+
+## Branch Rules
+
+### Main Branch
+- always stable
+- always playable
+- always buildable
+
+### Feature Branches
+Examples:
+```text
+feature/movement-prediction
+feature/socket-packet-handler
+feature/weapon-instance-system
+```
+
+### Fix Branches
+```text
+fix/interpolation-jitter
+fix/hud-null-crash
+```
+
+### Refactor Branches
+```text
+refactor/weapon-state-flow
+refactor/input-processing
+```
+
+---
+
+## Commit Rules
+
+### Commit Philosophy
+
+One commit should represent **one** gameplay or architecture change.
+
+Avoid:
+- mixed UI/network/gameplay changes
+- unrelated formatting updates
+- hidden logic modifications
+
+### Commit Message Format
+
+```text
+[type] short description
+```
+
+Examples:
+```text
+[feature] add movement prediction
+[fix] resolve snapshot interpolation jitter
+[refactor] simplify weapon actor ownership
+[test] add packet parsing validation
+```
+
+Allowed types: `feature`, `fix`, `refactor`, `test`, `docs`, `perf`, `ci`
+
+---
+
+## Pull Request Rules
+
+### PR Philosophy
+
+PR reviews should prioritize:
+- gameplay architecture
+- synchronization correctness
+- readability
+- Unreal performance
+- debuggability
+
+Avoid extremely detailed human-style reviews. AI reviews should remain **compact and actionable**.
+
+### PR Size Rules
+
+- Preferred: under **500** changed lines
+- Maximum recommended: under **1000** changed lines
+
+### PR Template
+
+Each PR should include:
+
+**Summary**
+- what changed
+- why it changed
+
+**Networking Impact**
+- packet changes
+- snapshot changes
+- prediction changes
+- synchronization impact
+
+**Validation**
+- local gameplay
+- fake server
+- packet logs
+- multiplayer simulation
+- bot testing
+
+### PR Review Categories (score: High / Medium / Low)
+
+- **Architecture** — separation, actor responsibility, instance ownership
+- **Readability** — naming, flow clarity, maintainability
+- **Synchronization Safety** — prediction, correction, snapshot, authority boundaries
+- **Performance** — Tick, actor count, allocations
+- **Unreal Usage** — engine dependency, modularity
+- **Debuggability** — logs, network visibility, prediction tracing
+
+Keep review summaries compact. Focus on synchronization correctness, architecture, performance risks, and server compatibility.
+
+---
+
+## CI Rules
+
+Every PR should validate:
+- Unreal build success
+- protobuf generation (when applicable)
+- packet parsing compatibility
+- gameplay compile validation
+- basic socket connection validation
+
+PR merge should be blocked if CI fails.
+
+---
+
+## Integration Rules
+
+Client networking changes must remain compatible with:
+- packet structures
+- snapshot formats
+- prediction flow
+- validation expectations
+
+Client and server synchronization rules must remain aligned.
+
+---
+
+## Networking Rules
+
+### Avoid Unreal Replication Dependency
+
+Do **not** depend on:
+- Unreal replication authority for gameplay
+- Unreal RPC gameplay ownership
+- hidden engine synchronization
+
+Prefer:
+- explicit packets
+- explicit snapshots
+- manual synchronization
+- predictable ownership flow
+
+---
+
+## Gameplay Rules
+
+### Instance vs Actor Separation
+
+Gameplay state and visual representation must remain separated.
+
+Examples:
+- `WeaponInstance` = gameplay state (UObject / `UNN_ObjectBase`)
+- `WeaponActor` = world representation (`ANN_ActorBase`)
+- `CharacterObject` = gameplay logic (`UNN_CharacterObjectBase`)
+- `CharacterActor` = visual pawn (`ANN_CharacterBase`)
+
+Avoid storing gameplay authority inside Actors.
+
+---
+
+## Tick Rules
+
+Avoid unnecessary Tick usage.
+
+Prefer:
+- event-driven updates
+- explicit synchronization events
+- controlled update frequency
+
+Tick-heavy gameplay logic increases networking instability.
+
+---
+
+## Refactor Rules
+
+Refactors must:
+- preserve synchronization behavior
+- improve readability
+- reduce coupling
+- simplify ownership
+
+Avoid hidden gameplay logic changes inside refactor PRs.
+
+---
+
+## Logging Rules
+
+Important systems should log:
+- packet parsing failures
+- prediction corrections
+- snapshot mismatches
+- disconnect handling
+- synchronization failures
+
+Logs should remain concise and searchable.
+
+---
+
+## AI Review Optimization
+
+Prefer:
+- category scoring
+- concise summaries
+- architecture-focused feedback
+- synchronization risk detection
+
+Avoid:
+- explaining every function
+- repetitive style commentary
+- excessive formatting discussion
+
+---
+
+# NoNamed Project Architecture (C++ Implementation)
+
+This project uses UE 5.7 with a strict **C++-first** architecture: `UDataAsset` → `UNN_ObjectBase` (logic) → `AActor` / `ACharacter` (visual).
+
+## C++ Priority & Blueprint Restriction
+
+- All gameplay logic, base behaviors, framework classes, and functions MUST be written in **C++**.
+- **Exception**: Animation Blueprints (ABP) and Behavior Trees (BT) only.
+- **Prohibited**: gameplay scripts, event handlers, or UI managers in Blueprint.
+
+## Comments (Required)
+
+All code comments MUST be written in **English only** (`//`, `/** */`, inline header notes). Do not use Korean or other languages in comments.
+
+## Naming Conventions
+
+- `UNN_` — UObject logic instances and DataAssets
+- `ANN_` — Actors and Characters
+- `FNN_` — spawn / assembly contexts
+- `INN_` — interfaces
+
+## Object & Spawning Pipeline
+
+### Data and Instances
+- Static data: `UNN_DataAsset` (and `UNN_CharacterDataAsset` for characters)
+- Runtime logic: `UNN_ObjectBase` (and `UNN_CharacterObjectBase` for characters)
+- Flow: DataAsset metadata → Object instance drives logic
+
+### Object Instance Creation
+- Use `UNN_ObjectSpawnSubsystem::CreateObject(DataAsset)` — delegates to `UNN_DataAsset::CreateInstance()`
+- Do not use raw `NewObject` outside this pipeline
+
+### World Representation (`INN_ObjectActorInterface`)
+- `ANN_ActorBase` — non-pawn world entities
+- `ANN_CharacterBase` — characters
+- `UNN_ObjectBase::SpawnIntoWorld` — deferred spawn, interface bind, `FinishSpawning`
+
+### Spawn Subsystems (orchestration only)
+- `UNN_ObjectSpawnSubsystem` — create logic instances
+- `UNN_ActorSpawnSubsystem` — `SpawnActorFromObject` → `SpawnIntoWorld`
+- `UNN_CharacterSpawnSubsystem` — `SpawnCharacterFromObject` → 5-step character pipeline
+
+## Character Spawning (5-Step Sequence)
+
+Inside `UNN_CharacterObjectBase`:
+1. **PreInit** — pre-spawn prep
+2. **SpawnDeferred** — `SpawnActorDeferred`
+3. **ContextSetting** — bind source, identity/mesh, animation, mesh transform (visibility after transform)
+4. **SpawnFinish** — `FinishSpawning`
+5. **PostInit** — ASC and post hooks
+
+`ANN_GameMode::PostLogin` must create `CharacterObjectBase` **before** `Super::PostLogin`. Use `SpawnDefaultPawnAtTransform_Implementation` for data-driven pawn spawn (`DefaultPawnClass` may be null).
+
+## Character DataAsset
+
+- `FNN_CharacterAnimationContext` — ABP class, hit/death montages
+- `FNN_ObjectMeshTransformContext` — skeletal mesh relative location/rotation
+- Applied via `ApplyCharacterAnimation` and `ApplyCharacterMeshTransform` in `ContextSetting`
+
+## Coding Practices
+
+- Forward-declare in headers when possible
+- Subsystems are single entry points for spawn/create requests
+- Header files: minimize includes; prefer forward declarations
