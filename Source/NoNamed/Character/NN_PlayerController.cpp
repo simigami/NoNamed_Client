@@ -40,6 +40,20 @@ ANN_PlayerController::ANN_PlayerController()
 	{
 		MoveAction = MoveActionFinder.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UInputAction> FireActionFinder(
+		TEXT("/Game/NN/Input/Actions/IA_Fire.IA_Fire"));
+	if (FireActionFinder.Succeeded())
+	{
+		FireAction = FireActionFinder.Object;
+	}
+	
+	static ConstructorHelpers::FObjectFinder<UInputAction> ReloadActionFinder(
+	TEXT("/Game/NN/Input/Actions/IA_Reload.IA_Reload"));
+	if (ReloadActionFinder.Succeeded())
+	{
+		ReloadAction = ReloadActionFinder.Object;
+	}
 }
 
 void ANN_PlayerController::BeginPlay()

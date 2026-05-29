@@ -24,7 +24,7 @@ public:
 	UPROPERTY(VisibleInstanceOnly, Category="Data")
 	TObjectPtr<AActor> SpawnedActor;
 
-	void SetDataAsset(UNN_DataAsset* InDataAsset);
+	virtual void SetDataAsset(UNN_DataAsset* InDataAsset);
 
 	virtual bool ShouldSpawnIntoWorld() const;
 

@@ -6,6 +6,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "NN_GameState.generated.h"
 
+class UNN_WeaponDataAsset;
 class UNN_CharacterDataAsset;
 
 UCLASS()
@@ -17,7 +18,12 @@ public:
 	UFUNCTION()
 	UNN_CharacterDataAsset* GetCharacterDataAsset() const;
 
+	const TArray<TObjectPtr<UNN_WeaponDataAsset>>& GetTestWeaponDataAssets() const { return TestWeaponDataAssets; }
+
 protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Character")
 	TObjectPtr<UNN_CharacterDataAsset> CharacterDataAsset;
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Character")
+	TArray<TObjectPtr<UNN_WeaponDataAsset>> TestWeaponDataAssets;
 };
