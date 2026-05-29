@@ -21,3 +21,7 @@ bool INN_CombatWeaponInterface::CanReload() const
 void INN_CombatWeaponInterface::Reload()
 {
 }
+
+void INN_CombatWeaponInterface::FinishReload()
+{
+}

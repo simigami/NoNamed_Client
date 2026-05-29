@@ -82,6 +82,8 @@ protected:
 
 	void StartFire();
 	void StopFire();
+	
+	void Reload();
 
 	void ApplyIdentityContext(const FNN_ObjectIdentityContext& Identity);
 	void ApplyMeshContext(const FNN_ObjectMeshContext& Mesh) const;

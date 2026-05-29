@@ -13,6 +13,7 @@ void UNN_WeaponObjectBase::SetDataAsset(UNN_DataAsset* InDataAsset)
 	if (const UNN_WeaponDataAsset* WeaponData = Cast<UNN_WeaponDataAsset>(InDataAsset))
 	{
 		CurrentAmmo = WeaponData->MagazineSize;
+		MaxReserveAmmo = WeaponData->MaxReserveAmmo;
 	}
 }
 
@@ -22,8 +23,30 @@ ENN_WeaponClass UNN_WeaponObjectBase::GetWeaponClass() const
 	return WeaponData ? WeaponData->WeaponClass : ENN_WeaponClass::None;
 }
 
+ENN_WeaponFireMode UNN_WeaponObjectBase::GetWeaponFireMode() const
+{
+	const UNN_WeaponDataAsset* WeaponData = Cast<UNN_WeaponDataAsset>(DataAsset);
+	return WeaponData ? WeaponData->FireMode : ENN_WeaponFireMode::None;
+}
+
+int32 UNN_WeaponObjectBase::GetWeaponSemiAutoCount() const
+{
+	const UNN_WeaponDataAsset* WeaponData = Cast<UNN_WeaponDataAsset>(DataAsset);
+	if (WeaponData && WeaponData->FireMode == ENN_WeaponFireMode::SemiAuto)
+	{
+		return WeaponData->SemiAutoCount;
+	}
+	
+	return 0;
+}
+
 bool UNN_WeaponObjectBase::CanFire() const
 {
+	if (!bCanFireWeapon)
+	{
+		return false;
+	}
+
 	// TODO: IOCP, Move authoritative fire-state validation to the server.
 	if (CurrentAmmo <= 0)
 	{
@@ -36,11 +59,26 @@ bool UNN_WeaponObjectBase::CanFire() const
 		return false;
 	}
 
-	const double CurrentTime = GetWorld()->GetTimeSeconds();
+	const UWorld* World = GetWorld();
+	if (!World)
+	{
+		return false;
+	}
+
+	// TODO: IOCP, Server owns fire cadence; client RPM gate is temporary prediction only.
+	const double CurrentTime = World->GetTimeSeconds();
 	const double Cooldown = 60.0 / WeaponData->FireRateRPM;
 	if (CurrentTime - LastFireTime < Cooldown)
 	{
 		return false;
+	}
+
+	if (GetWeaponFireMode() == ENN_WeaponFireMode::SemiAuto)
+	{
+		if (SemiAutoShotCount >= GetWeaponSemiAutoCount())
+		{
+			return false;
+		}
 	}
 
 	return true;
@@ -48,6 +86,8 @@ bool UNN_WeaponObjectBase::CanFire() const
 
 void UNN_WeaponObjectBase::StartFire()
 {
+	bCanFireWeapon = true;
+	
 	// TODO: IOCP, Send fire-pressed input to the server instead of authoritatively firing here.
 	const UNN_WeaponDataAsset* WeaponData = Cast<UNN_WeaponDataAsset>(DataAsset);
 	if (!WeaponData)
@@ -55,50 +95,104 @@ void UNN_WeaponObjectBase::StartFire()
 		return;
 	}
 
-	FirePressTime = GetWorld()->GetTimeSeconds();
-	UE_LOG(LogTemp, Log, TEXT("UNN_WeaponObjectBase::StartFire - Pressed at %.3f"), FirePressTime);
-
-	if (CanFire())
+	UWorld* World = GetWorld();
+	if (!World)
 	{
-		FireShot();
+		return;
 	}
 
-	if (WeaponData->FireMode == ENN_WeaponFireMode::Auto)
+	FirePressTime = World->GetTimeSeconds();
+	UE_LOG(LogTemp, Log, TEXT("UNN_WeaponObjectBase::StartFire - Fire started. Magazine: %d, Reserve: %d"), CurrentAmmo, MaxReserveAmmo);
+
+	TryFireShot();
+
+	if (WeaponData->FireMode != ENN_WeaponFireMode::Single)
 	{
-		// TODO: IOCP, Replace timer-driven auto fire with a NextFireTime scheduler so RPM is not limited by timer drift.
+		// TODO: IOCP, Replace timer-driven auto fire with server-authoritative fire cadence.
 		const float Interval = 60.0f / WeaponData->FireRateRPM;
-		GetWorld()->GetTimerManager().SetTimer(FireTimerHandle, this, &UNN_WeaponObjectBase::FireShot, Interval, true);
+		World->GetTimerManager().SetTimer(FireTimerHandle, this, &UNN_WeaponObjectBase::TryFireShot, Interval, true);
 	}
 }
 
 void UNN_WeaponObjectBase::StopFire()
 {
+	bCanFireWeapon = false;
+	
 	// TODO: IOCP, Send fire-released input to the server.
-	const double Now = GetWorld()->GetTimeSeconds();
-	if (FirePressTime >= 0.0)
+	if (GetWeaponFireMode() == ENN_WeaponFireMode::SemiAuto)
 	{
-		UE_LOG(LogTemp, Log, TEXT("UNN_WeaponObjectBase::StopFire - Released at %.3f, held %.3f sec"),
-			Now, Now - FirePressTime);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("UNN_WeaponObjectBase::StopFire - Released at %.3f"), Now);
+		SemiAutoShotCount = 0;
 	}
 
 	FirePressTime = -1.0;
-	GetWorld()->GetTimerManager().ClearTimer(FireTimerHandle);
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(FireTimerHandle);
+	}
 }
 
 bool UNN_WeaponObjectBase::CanReload() const
 {
 	// TODO: IOCP, Validate reload state on the server.
+	if (!bCanReload)
+	{
+		return false;
+	}
+	
+	if (MaxReserveAmmo == 0)
+	{
+		return false;
+	}
+	
+	if (const UNN_WeaponDataAsset* WeaponData = Cast<UNN_WeaponDataAsset>(DataAsset))
+	{
+		if (CurrentAmmo == WeaponData->MagazineSize)
+		{
+			return false;
+		}
+	}
+
 	return true;
+}
+
+void UNN_WeaponObjectBase::FinishReload()
+{
+	if (const UNN_WeaponDataAsset* WeaponData = Cast<UNN_WeaponDataAsset>(DataAsset))
+	{
+		const int32 AmmoToFullMagazine = WeaponData->MagazineSize - CurrentAmmo;
+		const int32 NextAmmo = MaxReserveAmmo >= AmmoToFullMagazine 
+		? AmmoToFullMagazine 
+		: MaxReserveAmmo;
+		
+		CurrentAmmo += NextAmmo;
+		MaxReserveAmmo -= NextAmmo;
+		
+		bCanReload = true;
+		bCanFireWeapon = true;
+
+		UE_LOG(LogTemp, Log, TEXT("UNN_WeaponObjectBase::FinishReload - Reload complete. Loaded: %d, Magazine: %d, Reserve: %d"),
+			NextAmmo, CurrentAmmo, MaxReserveAmmo);
+	}
 }
 
 void UNN_WeaponObjectBase::Reload()
 {
 	// TODO: IOCP, Implement authoritative reload timing and ammo transfer on the server.
-	UE_LOG(LogTemp, Log, TEXT("UNN_WeaponObjectBase::Reload - Weapon reload trigger."));
+	if (const UNN_WeaponDataAsset* WeaponData = Cast<UNN_WeaponDataAsset>(DataAsset))
+	{
+		StopFire();
+		
+		const float ReloadTime = WeaponData->ReloadTime;
+		
+		bCanReload = false;
+		bCanFireWeapon = false;
+
+		UE_LOG(LogTemp, Log, TEXT("UNN_WeaponObjectBase::Reload - Reload started (%.2fs). Magazine: %d, Reserve: %d"),
+			ReloadTime, CurrentAmmo, MaxReserveAmmo);
+		
+		GetWorld()->GetTimerManager().SetTimer(ReloadTimerHandle, this, &UNN_WeaponObjectBase::FinishReload, ReloadTime, false);
+	}
 }
 
 void UNN_WeaponObjectBase::FireShot()
@@ -111,17 +205,68 @@ void UNN_WeaponObjectBase::FireShot()
 		return;
 	}
 
-	const double CurrentTime = GetWorld()->GetTimeSeconds();
+	const UWorld* World = GetWorld();
+	const double CurrentTime = World ? World->GetTimeSeconds() : 0.0;
 	const double Cooldown = 60.0 / WeaponData->FireRateRPM;
-	if (CurrentTime - LastFireTime < Cooldown)
+	if (World && CurrentTime - LastFireTime < Cooldown)
 	{
-		// TODO: IOCP, Move RPM gating out of FireShot; cooldown checks here can skip timer ticks and lower the effective RPM.
+		// TODO: IOCP, Server owns fire cadence; skip this tick without ending hold-to-fire.
 		return;
+	}
+	
+	if (GetWeaponFireMode() == ENN_WeaponFireMode::SemiAuto)
+	{
+		++SemiAutoShotCount;
 	}
 
 	CurrentAmmo--;
 	LastFireTime = CurrentTime;
+	UE_LOG(LogTemp, Log, TEXT("UNN_WeaponObjectBase::FireShot - Fired. Magazine: %d, Reserve: %d"), CurrentAmmo, MaxReserveAmmo);
 	ExecuteLineTrace();
+}
+
+void UNN_WeaponObjectBase::TryFireShot()
+{
+	if (!bCanFireWeapon)
+	{
+		StopFire();
+		return;
+	}
+
+	if (CurrentAmmo <= 0)
+	{
+		StopFire();
+		return;
+	}
+
+	const UNN_WeaponDataAsset* WeaponData = Cast<UNN_WeaponDataAsset>(DataAsset);
+	if (!WeaponData || WeaponData->FireRateRPM <= 0.0f)
+	{
+		StopFire();
+		return;
+	}
+
+	if (GetWeaponFireMode() == ENN_WeaponFireMode::SemiAuto)
+	{
+		if (SemiAutoShotCount >= GetWeaponSemiAutoCount())
+		{
+			StopFire();
+			return;
+		}
+	}
+
+	// TODO: IOCP, Server owns fire cadence and shot authorization; FireShot applies temporary client RPM gate.
+	FireShot();
+}
+
+void UNN_WeaponObjectBase::TryReload()
+{
+	if (!CanReload())
+	{
+		return;
+	}
+	
+	Reload();
 }
 
 void UNN_WeaponObjectBase::ExecuteLineTrace()
@@ -174,8 +319,5 @@ void UNN_WeaponObjectBase::ExecuteLineTrace()
 
 	World->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params);
 
-	// Draw visible red debug line representing the camera look direction
 	DrawDebugLine(World, Start, Hit.bBlockingHit ? Hit.ImpactPoint : End, FColor::Red, false, 0.1f, 0, 2.0f);
-	
-	UE_LOG(LogTemp, Log, TEXT("UNN_WeaponObjectBase::ExecuteLineTrace - Fired shot in camera direction. Ammo: %d"), CurrentAmmo);
 }

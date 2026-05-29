@@ -162,6 +162,11 @@ void ANN_CharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 			EnhancedInputComponent->BindAction(PlayerController->FireAction, ETriggerEvent::Completed, this, &ANN_CharacterBase::StopFire);
 			EnhancedInputComponent->BindAction(PlayerController->FireAction, ETriggerEvent::Canceled, this, &ANN_CharacterBase::StopFire);
 		}
+		
+		if (PlayerController->ReloadAction)
+		{
+			EnhancedInputComponent->BindAction(PlayerController->ReloadAction, ETriggerEvent::Triggered, this, &ANN_CharacterBase::Reload);
+		}
 	}
 }
 
@@ -169,7 +174,7 @@ void ANN_CharacterBase::StartFire()
 {
 	if (const UNN_EquipmentComponent* EquipComp = FindComponentByClass<UNN_EquipmentComponent>())
 	{
-		if (UNN_WeaponObjectBase* Weapon = EquipComp->GetEquippedWeapons())
+		if (UNN_WeaponObjectBase* Weapon = EquipComp->GetEquippedWeapon())
 		{
 			Weapon->StartFire();
 		}
@@ -180,9 +185,20 @@ void ANN_CharacterBase::StopFire()
 {
 	if (const UNN_EquipmentComponent* EquipComp = FindComponentByClass<UNN_EquipmentComponent>())
 	{
-		if (UNN_WeaponObjectBase* Weapon = EquipComp->GetEquippedWeapons())
+		if (UNN_WeaponObjectBase* Weapon = EquipComp->GetEquippedWeapon())
 		{
 			Weapon->StopFire();
+		}
+	}
+}
+
+void ANN_CharacterBase::Reload()
+{
+	if (const UNN_EquipmentComponent* EquipComp = FindComponentByClass<UNN_EquipmentComponent>())
+	{
+		if (UNN_WeaponObjectBase* Weapon = EquipComp->GetEquippedWeapon())
+		{
+			Weapon->TryReload();
 		}
 	}
 }

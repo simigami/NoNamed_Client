@@ -108,6 +108,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Fire", meta = (ClampMin = "1"))
 	float FireRateRPM = 600.0f;
 
+	/** Rounds per magazine / clip */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ammo", meta = (ClampMin = "1"))
+	int32 MagazineSize = 30;
+	
 	/** Shots per burst when FireMode is Semi-Auto */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Fire", meta = (ClampMin = "1", EditCondition = "FireMode == ENN_WeaponFireMode::SemiAuto"))
 	int32 SemiAutoCount = 3;
@@ -115,10 +119,6 @@ public:
 	/** Shots per burst when FireMode is Semi-Auto */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Fire", meta = (ClampMin = "1", EditCondition = "FireMode == ENN_WeaponFireMode::Auto"))
 	int32 AutoCount = MagazineSize;
-
-	/** Rounds per magazine / clip */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ammo", meta = (ClampMin = "1"))
-	int32 MagazineSize = 30;
 
 	/** Maximum reserve ammo the weapon can carry */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Weapon|Ammo", meta = (ClampMin = "0"))

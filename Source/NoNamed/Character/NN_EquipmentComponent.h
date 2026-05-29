@@ -41,7 +41,7 @@ public:
 
 	/** Get the weapon currently being held in hand (Active Weapon) */
 	UFUNCTION(BlueprintPure, Category = "Equipment")
-	UNN_WeaponObjectBase* GetEquippedWeapons() const;
+	UNN_WeaponObjectBase* GetEquippedWeapon() const;
 
 	/** Calculate total weight of all equipped slot weapons */
 	float GetEquipmentWeight() const;

@@ -127,6 +127,7 @@ void UNN_EquipmentComponent::UnequipHand()
 {
 	if (ActiveWeapon)
 	{
+		ActiveWeapon->StopFire();
 		DetachWeaponActor(ActiveWeapon);
 		if (ActiveWeapon->SpawnedActor)
 		{
@@ -147,7 +148,7 @@ bool UNN_EquipmentComponent::HasWeapon(const UNN_WeaponObjectBase* Weapon) const
 	return Primaries.Contains(Weapon) || Secondary == Weapon || Melee == Weapon;
 }
 
-UNN_WeaponObjectBase* UNN_EquipmentComponent::GetEquippedWeapons() const
+UNN_WeaponObjectBase* UNN_EquipmentComponent::GetEquippedWeapon() const
 {
 	return ActiveWeapon;
 }

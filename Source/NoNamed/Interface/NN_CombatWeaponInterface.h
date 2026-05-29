@@ -32,4 +32,6 @@ public:
 
 	/** Executes the reload sequence */
 	virtual void Reload();
+	
+	virtual void FinishReload();
 };

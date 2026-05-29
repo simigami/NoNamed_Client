@@ -88,7 +88,7 @@ bool UNN_InventoryComponent::PickupItem(UNN_ItemObjectBase* Item)
 		{
 			if (UNN_EquipmentComponent* EquipComp = GetOwner()->FindComponentByClass<UNN_EquipmentComponent>())
 			{
-				if (EquipComp->GetEquippedWeapons() == Weapon)
+				if (EquipComp->GetEquippedWeapon() == Weapon)
 				{
 					bKeepActor = true;
 				}
